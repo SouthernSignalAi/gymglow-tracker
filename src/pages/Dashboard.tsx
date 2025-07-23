@@ -128,7 +128,7 @@ export default function Dashboard() {
       console.log(`Found ${exerciseTemplates.length} exercises for ${buttonType}`)
       
       // 3. Navigate to workout page with data
-      navigate(`/workout/${airtableDayType}/${workoutResult.id}`, { 
+      navigate(`/workout/${buttonType}`, { 
         state: { 
           workoutId: workoutResult.id, 
           exercises: exerciseTemplates,
@@ -211,7 +211,7 @@ export default function Dashboard() {
           <Card className="p-6 bg-gradient-to-br from-success/5 to-success/10 border-success/20">
             <div className="flex items-center gap-2 text-success">
               <Target className="h-5 w-5" />
-              <span className="font-medium">Today's {todaysWorkout.fields.DayType} workout completed!</span>
+              <span className="font-medium">Today's {todaysWorkout.fields.Daytype} workout completed!</span>
             </div>
           </Card>
         )}
@@ -242,7 +242,7 @@ export default function Dashboard() {
           </div>
           <div className="grid gap-3">
             {workoutTypes.map((workout) => {
-              const todayWorkoutMatch = todaysWorkout?.fields.DayType === workout.dayType
+              const todayWorkoutMatch = todaysWorkout?.fields.Daytype === workout.dayType
               const isCompleted = todayWorkoutMatch && todaysWorkout?.fields.Completed
 
               return (

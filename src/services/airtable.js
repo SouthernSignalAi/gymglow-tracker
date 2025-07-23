@@ -25,7 +25,7 @@ export const createWorkout = async (workoutData) => {
       body: JSON.stringify({
         fields: {
           Date: new Date().toISOString().split('T')[0],
-          DayType: workoutData.DayType, // "Push", "Lower1", "Pull", "Lower2", "Arms"
+          Daytype: workoutData.DayType, // FIXED: Use "Daytype" to match Airtable field name
           Completed: false,
           CardioCompleted: false,
           Duration: null,
