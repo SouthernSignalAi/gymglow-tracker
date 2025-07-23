@@ -23,8 +23,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/workouts" element={<WorkoutsList />} />
-            <Route path="/workout/:dayType" element={<WorkoutSession />} />
-            <Route path="/workout/:dayType/view" element={<WorkoutSession />} />
+            <Route path="/workout/:dayType/:workoutId" element={<WorkoutSession />} />
             <Route path="/progress" element={<Progress />} />
             <Route path="/profile" element={<Profile />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

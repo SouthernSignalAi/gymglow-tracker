@@ -10,7 +10,7 @@ import { getExercisesForDay, createWorkout, logExerciseSet, updateWorkout, EXERC
 import { useToast } from '@/hooks/use-toast'
 
 export default function WorkoutSession() {
-  const { dayType } = useParams()
+  const { dayType, workoutId } = useParams()
   const navigate = useNavigate()
   const { toast } = useToast()
   
@@ -25,10 +25,10 @@ export default function WorkoutSession() {
   const [workoutStartTime, setWorkoutStartTime] = useState<Date | null>(null)
 
   useEffect(() => {
-    if (dayType) {
+    if (dayType && workoutId) {
       initializeWorkout()
     }
-  }, [dayType])
+  }, [dayType, workoutId])
 
   useEffect(() => {
     let interval: NodeJS.Timeout
@@ -55,24 +55,19 @@ export default function WorkoutSession() {
       const exerciseList = getExercisesForDay(dayType!)
       setExercises(exerciseList)
       
-      // Create workout record
-      const workout = await createWorkout({
-        DayType: dayType!,
-        Notes: `${dayType} workout session`
-      })
-      
-      setCurrentWorkout(workout)
+      // Use existing workout ID from navigation
+      setCurrentWorkout({ id: workoutId })
       setWorkoutStartTime(new Date())
       
       toast({
-        title: "Workout Started!",
-        description: `${dayType} day workout is ready`,
+        title: "Workout Ready!",
+        description: `${dayType} day workout loaded`,
       })
     } catch (error) {
       console.error('Failed to initialize workout:', error)
       toast({
         title: "Error",
-        description: "Failed to start workout",
+        description: "Failed to load workout",
         variant: "destructive",
       })
     }
@@ -85,7 +80,7 @@ export default function WorkoutSession() {
       const exercise = exercises[currentExerciseIndex]
       
       await logExerciseSet({
-        WorkoutID: currentWorkout.id,
+        WorkoutID: workoutId,
         ExerciseName: exercise.name,
         SetNumber: currentSet,
         WeightKG: parseFloat(weight),
@@ -139,12 +134,12 @@ export default function WorkoutSession() {
   }
 
   const finishWorkout = async () => {
-    if (!currentWorkout || !workoutStartTime) return
+    if (!workoutId || !workoutStartTime) return
 
     try {
       const duration = Math.round((Date.now() - workoutStartTime.getTime()) / 60000)
       
-      await updateWorkout(currentWorkout.id, {
+      await updateWorkout(workoutId, {
         Completed: true,
         Duration: duration
       })

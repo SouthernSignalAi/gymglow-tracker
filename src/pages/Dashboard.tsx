@@ -2,12 +2,12 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Layout } from '@/components/Layout'
 import { WorkoutCard } from '@/components/WorkoutCard'
+import { createWorkout, getTodaysWorkout, getWorkouts, testConnection } from '@/services/airtable.js'
+import { useToast } from '@/hooks/use-toast'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { Calendar, TrendingUp, Zap, Target } from 'lucide-react'
-import { getTodaysWorkout, getWorkouts, testConnection } from '@/services/airtable.js'
-import { useToast } from '@/hooks/use-toast'
 
 // All available workout types - no day restrictions
 const workoutTypes = [
@@ -69,12 +69,28 @@ export default function Dashboard() {
     }
   }
 
-  const handleStartWorkout = (dayType: string) => {
-    navigate(`/workout/${dayType.toLowerCase()}`)
-  }
-
-  const handleViewWorkout = (dayType: string) => {
-    navigate(`/workout/${dayType.toLowerCase()}/view`)
+  const startWorkout = async (dayType: string) => {
+    try {
+      // Create workout in Airtable first
+      const workout = await createWorkout({
+        DayType: dayType,
+        Notes: `${dayType} workout started`
+      })
+      
+      if (workout.id) {
+        // Navigate to workout page with workout ID
+        navigate(`/workout/${dayType}/${workout.id}`)
+      } else {
+        throw new Error('No workout ID returned')
+      }
+    } catch (error) {
+      console.error('Failed to start workout:', error)
+      toast({
+        title: "Error",
+        description: "Failed to start workout. Please try again.",
+        variant: "destructive",
+      })
+    }
   }
 
   if (loading) {
@@ -198,7 +214,7 @@ export default function Dashboard() {
                     <Button 
                       variant={isCompleted ? "outline" : "premium"}
                       size="sm" 
-                      onClick={() => handleStartWorkout(workout.dayType)}
+                      onClick={() => startWorkout(workout.dayType)}
                       className="w-full mt-4"
                     >
                       {isCompleted ? `Redo ${workout.dayType} Workout` : `Start ${workout.dayType} Workout`}
