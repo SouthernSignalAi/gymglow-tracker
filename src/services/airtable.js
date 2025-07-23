@@ -16,6 +16,15 @@ const headers = {
   'Content-Type': 'application/json'
 };
 
+// Helper function to get current week number
+const getCurrentWeekNumber = () => {
+  const now = new Date();
+  const start = new Date(now.getFullYear(), 0, 1);
+  const diff = now - start;
+  const oneWeek = 1000 * 60 * 60 * 24 * 7;
+  return Math.floor(diff / oneWeek) + 1;
+};
+
 // ========== WORKOUT OPERATIONS ==========
 export const createWorkout = async (workoutData) => {
   try {
@@ -29,8 +38,8 @@ export const createWorkout = async (workoutData) => {
           Completed: false,
           CardioCompleted: false,
           Duration: null,
-          Notes: workoutData.Notes || "",
-          ThemeUsed: workoutData.ThemeUsed || "Light"
+          "Workout Notes": workoutData.Notes || "", // FIXED: Use "Workout Notes" field name
+          WeekNumber: getCurrentWeekNumber() // FIXED: Add WeekNumber field that exists in Airtable
         }
       })
     });
