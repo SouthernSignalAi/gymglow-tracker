@@ -247,43 +247,53 @@ export default function WorkoutSession() {
               </div>
             </div>
 
+            {/* Previous Set Reference */}
+            <div className="bg-accent/5 p-3 rounded-lg mb-4">
+              <p className="text-sm text-foreground-muted mb-1">Previous workout:</p>
+              <p className="text-sm font-medium">No previous data available</p>
+            </div>
+
             {/* Weight Input */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Weight (kg)</label>
-              <div className="flex items-center gap-2">
+            <div className="space-y-3">
+              <label className="text-sm font-medium text-foreground">Weight (kg)</label>
+              <div className="flex items-center gap-3">
                 <Button
                   variant="outline"
-                  size="icon"
+                  size="lg"
                   onClick={() => adjustWeight(-2.5)}
                   disabled={isResting}
+                  className="min-h-[44px] min-w-[44px]"
                 >
-                  <Minus className="h-4 w-4" />
+                  <Minus className="h-5 w-5" />
                 </Button>
                 <Input
                   type="number"
                   value={weight}
                   onChange={(e) => setWeight(e.target.value)}
-                  className="text-center text-lg font-semibold"
-                  placeholder="0"
+                  className="text-center text-xl font-bold min-h-[44px] text-foreground"
+                  placeholder="0.0"
+                  step="0.5"
                   disabled={isResting}
                 />
                 <Button
                   variant="outline"
-                  size="icon"
+                  size="lg"
                   onClick={() => adjustWeight(2.5)}
                   disabled={isResting}
+                  className="min-h-[44px] min-w-[44px]"
                 >
-                  <Plus className="h-4 w-4" />
+                  <Plus className="h-5 w-5" />
                 </Button>
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-2 justify-center">
                 {[2.5, 5, 10].map(amount => (
                   <Button
                     key={amount}
-                    variant="outline"
+                    variant="secondary"
                     size="sm"
                     onClick={() => adjustWeight(amount)}
                     disabled={isResting}
+                    className="min-h-[44px] px-4"
                   >
                     +{amount}kg
                   </Button>
@@ -292,13 +302,13 @@ export default function WorkoutSession() {
             </div>
 
             {/* Reps Input */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Reps</label>
+            <div className="space-y-3">
+              <label className="text-sm font-medium text-foreground">Reps</label>
               <Input
                 type="number"
                 value={reps}
                 onChange={(e) => setReps(e.target.value)}
-                className="text-center text-lg font-semibold"
+                className="text-center text-xl font-bold min-h-[44px] text-foreground"
                 placeholder="0"
                 disabled={isResting}
               />
@@ -310,9 +320,9 @@ export default function WorkoutSession() {
               size="lg"
               onClick={logSet}
               disabled={!weight || !reps || isResting}
-              className="w-full"
+              className="w-full min-h-[52px] text-lg font-bold"
             >
-              Log Set
+              Log Set {currentSet}
             </Button>
           </div>
         </Card>

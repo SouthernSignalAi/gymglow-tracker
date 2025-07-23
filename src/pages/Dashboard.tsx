@@ -9,13 +9,13 @@ import { Calendar, TrendingUp, Zap, Target } from 'lucide-react'
 import { getTodaysWorkout, getWorkouts, testConnection } from '@/services/airtable.js'
 import { useToast } from '@/hooks/use-toast'
 
-// Weekly workout schedule
-const weeklySchedule = [
-  { dayType: 'Push', dayName: 'Monday', dayOfWeek: 1 },
-  { dayType: 'Lower1', dayName: 'Tuesday', dayOfWeek: 2 },
-  { dayType: 'Pull', dayName: 'Wednesday', dayOfWeek: 3 },
-  { dayType: 'Lower2', dayName: 'Thursday', dayOfWeek: 4 },
-  { dayType: 'Arms', dayName: 'Friday', dayOfWeek: 5 },
+// All available workout types - no day restrictions
+const workoutTypes = [
+  { dayType: 'Push', description: 'Chest, Shoulders & Triceps' },
+  { dayType: 'Lower1', description: 'Quads, Glutes & Core' },
+  { dayType: 'Pull', description: 'Back, Lats & Biceps' },
+  { dayType: 'Lower2', description: 'Glutes, Hamstrings & Calves' },
+  { dayType: 'Arms', description: 'Biceps, Triceps & Accessories' },
 ]
 
 export default function Dashboard() {
@@ -26,11 +26,8 @@ export default function Dashboard() {
   const [connectionStatus, setConnectionStatus] = useState<'checking' | 'connected' | 'error'>('checking')
   const [loading, setLoading] = useState(true)
 
-  // Get current week dates
+  // Current date
   const now = new Date()
-  const currentWeek = getWeekDates(now)
-  const todayDayOfWeek = now.getDay() === 0 ? 7 : now.getDay() // Convert Sunday from 0 to 7
-  const todaysSchedule = weeklySchedule.find(s => s.dayOfWeek === todayDayOfWeek)
 
   useEffect(() => {
     initializeDashboard()
@@ -121,7 +118,7 @@ export default function Dashboard() {
     return isInCurrentWeek(workoutDate)
   })
   const completedThisWeek = thisWeekWorkouts.filter(w => w.fields.Completed).length
-  const weeklyProgress = (completedThisWeek / 5) * 100
+  const weeklyProgress = Math.min((completedThisWeek / 5) * 100, 100)
 
   return (
     <Layout>
@@ -132,38 +129,17 @@ export default function Dashboard() {
             Welcome Back!
           </h1>
           <p className="text-foreground-muted">
-            {todaysSchedule ? `Today is ${todaysSchedule.dayName} - ${todaysSchedule.dayType} Day` : "Rest Day"}
+            Choose any workout for today
           </p>
         </div>
 
-        {/* Today's Workout Highlight */}
-        {todaysSchedule && (
-          <Card className="p-6 bg-gradient-to-br from-primary/5 to-secondary/5 border-primary/20">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 bg-primary/20 rounded-full flex items-center justify-center">
-                <Target className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <h2 className="font-display font-semibold">Today's Focus</h2>
-                <p className="text-sm text-foreground-muted">{todaysSchedule.dayType} Day</p>
-              </div>
+        {/* Today's Workout Status */}
+        {todaysWorkout?.fields.Completed && (
+          <Card className="p-6 bg-gradient-to-br from-success/5 to-success/10 border-success/20">
+            <div className="flex items-center gap-2 text-success">
+              <Target className="h-5 w-5" />
+              <span className="font-medium">Today's {todaysWorkout.fields.DayType} workout completed!</span>
             </div>
-            
-            {todaysWorkout?.fields.Completed ? (
-              <div className="flex items-center gap-2 text-success">
-                <Target className="h-5 w-5" />
-                <span className="font-medium">Workout Completed!</span>
-              </div>
-            ) : (
-              <Button 
-                variant="premium" 
-                size="lg" 
-                onClick={() => handleStartWorkout(todaysSchedule.dayType)}
-                className="w-full"
-              >
-                Start {todaysSchedule.dayType} Workout
-              </Button>
-            )}
           </Card>
         )}
 
@@ -180,40 +156,55 @@ export default function Dashboard() {
             </div>
             <Progress value={weeklyProgress} className="h-2" />
             <p className="text-xs text-foreground-muted">
-              {5 - completedThisWeek} workouts remaining this week
+              Keep up the great work!
             </p>
           </div>
         </Card>
 
-        {/* This Week's Schedule */}
+        {/* Choose Today's Workout */}
         <div>
           <div className="flex items-center gap-2 mb-4">
-            <Calendar className="h-5 w-5 text-primary" />
-            <h2 className="font-display text-lg font-semibold">This Week</h2>
+            <Target className="h-5 w-5 text-primary" />
+            <h2 className="font-display text-lg font-semibold">Choose Your Workout</h2>
           </div>
-          <div className="space-y-3">
-            {weeklySchedule.map((schedule, index) => {
-              const workoutDate = currentWeek[index]
-              const isToday = workoutDate.toDateString() === now.toDateString()
-              const workoutRecord = thisWeekWorkouts.find(w => {
-                const wDate = new Date(w.fields.Date)
-                return wDate.toDateString() === workoutDate.toDateString()
-              })
-              const isCompleted = workoutRecord?.fields.Completed || false
-              const duration = workoutRecord?.fields.Duration
+          <div className="grid gap-3">
+            {workoutTypes.map((workout) => {
+              const todayWorkoutMatch = todaysWorkout?.fields.DayType === workout.dayType
+              const isCompleted = todayWorkoutMatch && todaysWorkout?.fields.Completed
 
               return (
-                <WorkoutCard
-                  key={schedule.dayType}
-                  dayType={schedule.dayType}
-                  dayName={schedule.dayName}
-                  isCompleted={isCompleted}
-                  isToday={isToday}
-                  duration={duration}
-                  date={workoutDate}
-                  onStart={() => handleStartWorkout(schedule.dayType)}
-                  onView={() => handleViewWorkout(schedule.dayType)}
-                />
+                <Card 
+                  key={workout.dayType}
+                  className={`relative overflow-hidden transition-all duration-300 hover:shadow-lg ${
+                    isCompleted ? 'opacity-75 bg-success/5 border-success/20' : ''
+                  }`}
+                >
+                  <div className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <h3 className="font-display text-lg font-semibold text-foreground mb-1">
+                          {workout.dayType}
+                        </h3>
+                        <p className="text-sm text-foreground-muted">
+                          {workout.description}
+                        </p>
+                      </div>
+                      {isCompleted && (
+                        <div className="text-success">
+                          <Target className="h-6 w-6" />
+                        </div>
+                      )}
+                    </div>
+                    <Button 
+                      variant={isCompleted ? "outline" : "premium"}
+                      size="sm" 
+                      onClick={() => handleStartWorkout(workout.dayType)}
+                      className="w-full mt-4"
+                    >
+                      {isCompleted ? `Redo ${workout.dayType} Workout` : `Start ${workout.dayType} Workout`}
+                    </Button>
+                  </div>
+                </Card>
               )
             })}
           </div>
@@ -247,20 +238,6 @@ export default function Dashboard() {
 }
 
 // Helper functions
-function getWeekDates(date: Date): Date[] {
-  const week = []
-  const startOfWeek = new Date(date)
-  const dayOfWeek = startOfWeek.getDay()
-  const diff = startOfWeek.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1) // Adjust for Sunday
-  startOfWeek.setDate(diff)
-
-  for (let i = 0; i < 7; i++) {
-    const day = new Date(startOfWeek)
-    day.setDate(startOfWeek.getDate() + i)
-    week.push(day)
-  }
-  return week.slice(0, 5) // Return only weekdays
-}
 
 function isInCurrentWeek(date: Date): boolean {
   const now = new Date()
