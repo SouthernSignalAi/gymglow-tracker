@@ -18,22 +18,36 @@ const headers = {
 
 // ========== WORKOUT OPERATIONS ==========
 export const createWorkout = async (workoutData) => {
-  const response = await fetch(`${AIRTABLE_CONFIG.baseUrl}/${AIRTABLE_CONFIG.tables.workouts}`, {
-    method: 'POST',
-    headers,
-    body: JSON.stringify({
-      fields: {
-        Date: new Date().toISOString(),
-        DayType: workoutData.DayType, // "Push", "Lower1", "Pull", "Lower2", "Arms"
-        Completed: false,
-        CardioCompleted: false,
-        Duration: null,
-        Notes: workoutData.Notes || "",
-        ThemeUsed: workoutData.ThemeUsed || "Light"
-      }
-    })
-  });
-  return response.json();
+  try {
+    const response = await fetch(`${AIRTABLE_CONFIG.baseUrl}/${AIRTABLE_CONFIG.tables.workouts}`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        fields: {
+          Date: new Date().toISOString().split('T')[0],
+          DayType: workoutData.DayType, // "Push", "Lower1", "Pull", "Lower2", "Arms"
+          Completed: false,
+          CardioCompleted: false,
+          Duration: null,
+          Notes: workoutData.Notes || "",
+          ThemeUsed: workoutData.ThemeUsed || "Light"
+        }
+      })
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('Airtable API Error:', errorData);
+      throw new Error(`Failed to create workout: ${response.status} - ${JSON.stringify(errorData)}`);
+    }
+    
+    const data = await response.json();
+    console.log('Workout created successfully:', data);
+    return data;
+  } catch (error) {
+    console.error('Error creating workout:', error);
+    throw error;
+  }
 };
 
 export const updateWorkout = async (workoutId, updateData) => {

@@ -101,10 +101,17 @@ export default function Dashboard() {
       }
       
       // 1. Create workout in Airtable
-      const workout = await createWorkout({
+      console.log(`Creating workout with DayType: ${airtableDayType}`)
+      const workoutResult = await createWorkout({
         DayType: airtableDayType,
         Notes: `${buttonType} workout started`
       })
+      
+      if (!workoutResult.id) {
+        throw new Error('Workout creation failed - no ID returned')
+      }
+      
+      console.log('Workout created with ID:', workoutResult.id)
       
       // 2. Get exercise templates for this workout
       const exerciseTemplates = await getExerciseTemplates(airtableDayType)
@@ -121,9 +128,9 @@ export default function Dashboard() {
       console.log(`Found ${exerciseTemplates.length} exercises for ${buttonType}`)
       
       // 3. Navigate to workout page with data
-      navigate(`/workout/${buttonType}`, { 
+      navigate(`/workout/${airtableDayType}/${workoutResult.id}`, { 
         state: { 
-          workoutId: workout.id, 
+          workoutId: workoutResult.id, 
           exercises: exerciseTemplates,
           dayType: airtableDayType,
           displayName: buttonType
