@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Layout } from '@/components/Layout'
 import { WorkoutCard } from '@/components/WorkoutCard'
-import { createWorkout, getTodaysWorkout, getWorkouts, testConnection } from '@/services/airtable.js'
+import { createWorkout, getTodaysWorkout, getWorkouts, testConnection, getExerciseTemplates, testExerciseTemplatesAccess } from '@/services/airtable.js'
 import { useToast } from '@/hooks/use-toast'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -25,6 +25,8 @@ export default function Dashboard() {
   const [todaysWorkout, setTodaysWorkout] = useState<any>(null)
   const [connectionStatus, setConnectionStatus] = useState<'checking' | 'connected' | 'error'>('checking')
   const [loading, setLoading] = useState(true)
+  const [isStartingWorkout, setIsStartingWorkout] = useState(false)
+  const [loadingWorkout, setLoadingWorkout] = useState('')
 
   // Current date
   const now = new Date()
@@ -69,27 +71,75 @@ export default function Dashboard() {
     }
   }
 
-  const startWorkout = async (dayType: string) => {
+  const startWorkout = async (buttonType: string) => {
+    setIsStartingWorkout(true)
+    setLoadingWorkout(buttonType)
+    
     try {
-      // Create workout in Airtable first
+      // Map button names to Airtable day types
+      const workoutTypeMapping = {
+        'Push': 'Push',
+        'Lower1': 'Lower1', 
+        'Pull': 'Pull',
+        'Lower2': 'Lower2',
+        'Arms': 'Accessory'  // Important: Arms button uses Accessory day type
+      } as const
+      
+      const airtableDayType = workoutTypeMapping[buttonType as keyof typeof workoutTypeMapping]
+      
+      console.log(`Starting ${buttonType} workout (Airtable: ${airtableDayType})...`)
+      
+      // TEST: Verify EXERCISE_TEMPLATES table access first
+      const tableTest = await testExerciseTemplatesAccess()
+      if (!tableTest.success) {
+        toast({
+          title: "Database Error",
+          description: `Cannot access EXERCISE_TEMPLATES table: ${tableTest.error}`,
+          variant: "destructive",
+        })
+        return
+      }
+      
+      // 1. Create workout in Airtable
       const workout = await createWorkout({
-        DayType: dayType,
-        Notes: `${dayType} workout started`
+        DayType: airtableDayType,
+        Notes: `${buttonType} workout started`
       })
       
-      if (workout.id) {
-        // Navigate to workout page with workout ID
-        navigate(`/workout/${dayType}/${workout.id}`)
-      } else {
-        throw new Error('No workout ID returned')
+      // 2. Get exercise templates for this workout
+      const exerciseTemplates = await getExerciseTemplates(airtableDayType)
+      
+      if (exerciseTemplates.length === 0) {
+        toast({
+          title: "No Exercises Found",
+          description: `No exercises found for ${buttonType} day. Please check your Exercise Templates.`,
+          variant: "destructive",
+        })
+        return
       }
+      
+      console.log(`Found ${exerciseTemplates.length} exercises for ${buttonType}`)
+      
+      // 3. Navigate to workout page with data
+      navigate(`/workout/${buttonType}`, { 
+        state: { 
+          workoutId: workout.id, 
+          exercises: exerciseTemplates,
+          dayType: airtableDayType,
+          displayName: buttonType
+        } 
+      })
+      
     } catch (error) {
       console.error('Failed to start workout:', error)
       toast({
         title: "Error",
-        description: "Failed to start workout. Please try again.",
+        description: `Failed to start ${buttonType} workout. Please try again.`,
         variant: "destructive",
       })
+    } finally {
+      setIsStartingWorkout(false)
+      setLoadingWorkout('')
     }
   }
 
@@ -216,8 +266,14 @@ export default function Dashboard() {
                       size="sm" 
                       onClick={() => startWorkout(workout.dayType)}
                       className="w-full mt-4"
+                      disabled={isStartingWorkout}
                     >
-                      {isCompleted ? `Redo ${workout.dayType} Workout` : `Start ${workout.dayType} Workout`}
+                      {isStartingWorkout && loadingWorkout === workout.dayType 
+                        ? 'Loading...' 
+                        : isCompleted 
+                          ? `Redo ${workout.dayType} Workout` 
+                          : `Start ${workout.dayType} Workout`
+                      }
                     </Button>
                   </div>
                 </Card>

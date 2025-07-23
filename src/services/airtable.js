@@ -242,6 +242,48 @@ export const CARDIO_PRESETS = [
   'Custom Session'
 ];
 
+// ========== EXERCISE_TEMPLATES TABLE ACCESS ==========
+export const getExerciseTemplates = async (dayType) => {
+  try {
+    // CRITICAL: Access EXERCISE_TEMPLATES table (tbllYK1bCgfz9W7Ta)
+    const filterFormula = `{Daytype} = "${dayType}"`;
+    const response = await fetch(`${AIRTABLE_CONFIG.baseUrl}/${AIRTABLE_CONFIG.tables.exerciseTemplates}?filterByFormula=${encodeURIComponent(filterFormula)}&sort[0][field]=ExerciseOrder&sort[0][direction]=asc`, {
+      headers: { 'Authorization': `Bearer ${AIRTABLE_CONFIG.apiKey}` }
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Failed to fetch EXERCISE_TEMPLATES: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    console.log(`Fetched ${data.records.length} exercises from EXERCISE_TEMPLATES for ${dayType}:`, data.records);
+    return data.records;
+  } catch (error) {
+    console.error('Error fetching from EXERCISE_TEMPLATES table:', error);
+    throw error;
+  }
+};
+
+// Test function to verify EXERCISE_TEMPLATES table access
+export const testExerciseTemplatesAccess = async () => {
+  try {
+    const response = await fetch(`${AIRTABLE_CONFIG.baseUrl}/${AIRTABLE_CONFIG.tables.exerciseTemplates}?maxRecords=5`, {
+      headers: { 'Authorization': `Bearer ${AIRTABLE_CONFIG.apiKey}` }
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Cannot access EXERCISE_TEMPLATES table: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    console.log('EXERCISE_TEMPLATES table access successful:', data.records);
+    return { success: true, recordCount: data.records.length };
+  } catch (error) {
+    console.error('EXERCISE_TEMPLATES table access failed:', error);
+    return { success: false, error: error.message };
+  }
+};
+
 // ========== TEST CONNECTION ==========
 export const testConnection = async () => {
   try {

@@ -7,6 +7,7 @@ import { ThemeProvider } from "@/hooks/useTheme";
 import Dashboard from "./pages/Dashboard";
 import WorkoutsList from "./pages/WorkoutsList";
 import WorkoutSession from "./pages/WorkoutSession";
+import WorkoutInterface from "./pages/WorkoutInterface";
 import Progress from "./pages/Progress";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
@@ -23,7 +24,8 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/workouts" element={<WorkoutsList />} />
-            <Route path="/workout/:dayType/:workoutId" element={<WorkoutSession />} />
+        <Route path="/workout/:dayType/:workoutId" element={<WorkoutSession />} />
+        <Route path="/workout/:workoutType" element={<WorkoutInterface />} />
             <Route path="/progress" element={<Progress />} />
             <Route path="/profile" element={<Profile />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
