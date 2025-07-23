@@ -34,11 +34,11 @@ export const createWorkout = async (workoutData) => {
       body: JSON.stringify({
         fields: {
           Date: new Date().toISOString().split('T')[0],
-          Daytype: workoutData.DayType, // FIXED: Use "Daytype" to match Airtable field name
+          Daytype: workoutData.Daytype || workoutData.DayType, // FIXED: Use "Daytype" to match Airtable field name
           Completed: false,
           CardioCompleted: false,
           Duration: null,
-          "Workout Notes": workoutData.Notes || "", // FIXED: Use "Workout Notes" field name
+          "Workout Notes": workoutData["Workout Notes"] || workoutData.Notes || "", // FIXED: Use "Workout Notes" field name
           WeekNumber: getCurrentWeekNumber() // FIXED: Add WeekNumber field that exists in Airtable
         }
       })
