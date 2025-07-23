@@ -72,6 +72,7 @@ export default function Dashboard() {
   }
 
   const startWorkout = async (buttonType: string) => {
+    console.log(`Starting workout: ${buttonType}`)
     setIsStartingWorkout(true)
     setLoadingWorkout(buttonType)
     
@@ -87,11 +88,13 @@ export default function Dashboard() {
       
       const airtableDayType = workoutTypeMapping[buttonType as keyof typeof workoutTypeMapping]
       
-      console.log(`Starting ${buttonType} workout (Airtable: ${airtableDayType})...`)
+      console.log(`🚀 Starting ${buttonType} workout (Airtable: ${airtableDayType})...`)
       
       // TEST: Verify EXERCISE_TEMPLATES table access first
+      console.log('🔍 Testing EXERCISE_TEMPLATES table access...')
       const tableTest = await testExerciseTemplatesAccess()
       if (!tableTest.success) {
+        console.error('❌ EXERCISE_TEMPLATES access failed:', tableTest.error)
         toast({
           title: "Database Error",
           description: `Cannot access EXERCISE_TEMPLATES table: ${tableTest.error}`,
@@ -99,24 +102,28 @@ export default function Dashboard() {
         })
         return
       }
+      console.log('✅ EXERCISE_TEMPLATES table access successful')
       
       // 1. Create workout in Airtable
-      console.log(`Creating workout with DayType: ${airtableDayType}`)
+      console.log(`📝 Creating workout with DayType: ${airtableDayType}`)
       const workoutResult = await createWorkout({
         Daytype: airtableDayType,
-        "Workout Notes": `${buttonType} workout started`
+        "Workout Notes": `${buttonType} workout started from dashboard`
       })
       
-      if (!workoutResult.id) {
+      if (!workoutResult?.id) {
+        console.error('❌ Workout creation failed - no ID returned:', workoutResult)
         throw new Error('Workout creation failed - no ID returned')
       }
       
-      console.log('Workout created with ID:', workoutResult.id)
+      console.log('✅ Workout created with ID:', workoutResult.id)
       
       // 2. Get exercise templates for this workout
+      console.log(`🏋️ Fetching exercise templates for ${airtableDayType}...`)
       const exerciseTemplates = await getExerciseTemplates(airtableDayType)
       
-      if (exerciseTemplates.length === 0) {
+      if (!exerciseTemplates || exerciseTemplates.length === 0) {
+        console.error('❌ No exercises found for day type:', airtableDayType)
         toast({
           title: "No Exercises Found",
           description: `No exercises found for ${buttonType} day. Please check your Exercise Templates.`,
@@ -125,23 +132,33 @@ export default function Dashboard() {
         return
       }
       
-      console.log(`Found ${exerciseTemplates.length} exercises for ${buttonType}`)
+      console.log(`✅ Found ${exerciseTemplates.length} exercises for ${buttonType}:`, exerciseTemplates.map(e => e.fields?.Exercisename))
       
-      // 3. Navigate to workout page with data
+      // 3. Prepare workout data for navigation
+      const workoutData = {
+        workoutId: workoutResult.id,
+        exercises: exerciseTemplates,
+        dayType: airtableDayType,
+        displayName: buttonType,
+        buttonType: buttonType
+      }
+      
+      console.log('📊 Workout data prepared:', workoutData)
+      
+      // 4. Navigate to workout page with data
+      console.log(`🧭 Navigating to /workout/${buttonType}`)
       navigate(`/workout/${buttonType}`, { 
-        state: { 
-          workoutId: workoutResult.id, 
-          exercises: exerciseTemplates,
-          dayType: airtableDayType,
-          displayName: buttonType
-        } 
+        state: workoutData,
+        replace: false // Don't replace history entry
       })
       
+      console.log('✅ Navigation initiated successfully')
+      
     } catch (error) {
-      console.error('Failed to start workout:', error)
+      console.error('❌ Failed to start workout:', error)
       toast({
-        title: "Error",
-        description: `Failed to start ${buttonType} workout. Please try again.`,
+        title: "Workout Start Failed",
+        description: `Failed to start ${buttonType} workout: ${error.message || 'Unknown error'}`,
         variant: "destructive",
       })
     } finally {
@@ -276,7 +293,7 @@ export default function Dashboard() {
                       disabled={isStartingWorkout}
                     >
                       {isStartingWorkout && loadingWorkout === workout.dayType 
-                        ? 'Loading...' 
+                        ? 'Starting...' 
                         : isCompleted 
                           ? `Redo ${workout.dayType} Workout` 
                           : `Start ${workout.dayType} Workout`
@@ -311,6 +328,19 @@ export default function Dashboard() {
             </Button>
           </div>
         </Card>
+
+        {/* Debug Panel - Remove this in production */}
+        {process.env.NODE_ENV === 'development' && (
+          <Card className="p-4 bg-muted/50">
+            <h3 className="font-semibold mb-2">Debug Info</h3>
+            <div className="text-xs space-y-1">
+              <div>Connection: {connectionStatus}</div>
+              <div>Today's Workout: {todaysWorkout ? todaysWorkout.fields.Daytype : 'None'}</div>
+              <div>Loading Workout: {loadingWorkout || 'None'}</div>
+              <div>Is Starting: {isStartingWorkout ? 'Yes' : 'No'}</div>
+            </div>
+          </Card>
+        )}
       </div>
     </Layout>
   )
