@@ -35,15 +35,6 @@ const handleAirtableError = async (response, operation = 'API call') => {
   }
 };
 
-// Helper function to get current week number
-const getCurrentWeekNumber = () => {
-  const now = new Date();
-  const start = new Date(now.getFullYear(), 0, 1);
-  const diff = now - start;
-  const oneWeek = 1000 * 60 * 60 * 24 * 7;
-  return Math.floor(diff / oneWeek) + 1;
-};
-
 // ========== WORKOUT OPERATIONS ==========
 export const createWorkout = async (workoutData) => {
   try {
