@@ -103,8 +103,8 @@ export default function Dashboard() {
       // 1. Create workout in Airtable
       console.log(`Creating workout with DayType: ${airtableDayType}`)
       const workoutResult = await createWorkout({
-        DayType: airtableDayType,
-        Notes: `${buttonType} workout started`
+        Daytype: airtableDayType,
+        "Workout Notes": `${buttonType} workout started`
       })
       
       if (!workoutResult.id) {
